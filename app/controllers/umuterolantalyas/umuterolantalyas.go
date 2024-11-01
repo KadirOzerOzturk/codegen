@@ -1,0 +1,127 @@
+package umuterolantalyas
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	"github.com/KadirOzerOzturk/deneme/app/entities"
+	"github.com/KadirOzerOzturk/deneme/app/services/umuterolantalya"
+	"github.com/KadirOzerOzturk/deneme/internal/validation"
+	"github.com/KadirOzerOzturk/deneme/pkg/di"
+)
+
+// Create controller
+func Create(c *fiber.Ctx) error {
+	// Create scope
+	scope := c.Locals("scope").(*di.Scope)
+	// Get service
+	service, err := di.GetService[umuterolantalya.Service](scope)
+	if err != nil {
+		return err
+	}
+	// Parse request body
+	var request *entities.Umuterolantalya
+	if err := c.BodyParser(&request); err != nil {
+		return err
+	}
+	// Validate request
+	if err = validation.Validate(request); err != nil {
+		return err
+	}
+	// Send request to service
+	err = service.Create(request)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(request)
+}
+
+// Index controller
+func Index(c *fiber.Ctx) error {
+	// Create scope
+	scope := c.Locals("scope").(*di.Scope)
+	// Get service
+	service, err := di.GetService[umuterolantalya.Service](scope)
+	if err != nil {
+		return err
+	}
+	// Send request to service
+	result, err := service.Index(c)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(result)
+}
+
+// Show controller
+func Show(c *fiber.Ctx) error {
+	// Create scope
+	scope := c.Locals("scope").(*di.Scope)
+	// Get service
+	service, err := di.GetService[umuterolantalya.Service](scope)
+	if err != nil {
+		return err
+	}
+	// Parse id
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return err
+	}
+	// Send request to service
+	item, err := service.Show(&id)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(item)
+}
+
+// Update controller
+func Update(c *fiber.Ctx) error {
+	// Create scope
+	scope := c.Locals("scope").(*di.Scope)
+	// Get service
+	service, err := di.GetService[umuterolantalya.Service](scope)
+	if err != nil {
+		return err
+	}
+	// Parse id
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return err
+	}
+	// Parse body
+	var request entities.Umuterolantalya
+	if err := c.BodyParser(&request); err != nil {
+		return err
+	}
+	// Send request to service
+	if err = service.Update(&id, &request); err != nil {
+		return err
+	}
+
+	return c.JSON(request)
+}
+
+// Delete controller
+func Delete(c *fiber.Ctx) error {
+	// Create scope
+	scope := c.Locals("scope").(*di.Scope)
+	// Get service
+	service, err := di.GetService[umuterolantalya.Service](scope)
+	if err != nil {
+		return err
+	}
+	// Parse id
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return err
+	}
+	// Send request to service
+	if err = service.Delete(&id); err != nil {
+		return err
+	}
+
+	return c.JSON("Item deleted successfully.")
+}
