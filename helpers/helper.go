@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -26,6 +27,7 @@ type Config struct {
 	ServiceTemplate    string `json:"serviceTemplate"`
 	ControllerTemplate string `json:"controllerTemplate"`
 	RepositoryTemplate string `json:"repositoryTemplate"`
+	BaseTemplate       string `json:"baseTemplate"`
 	EntitiesDir        string `json:"entitiesDir"`
 	RepositoryDir      string `json:"repositoryDir"`
 	ServiceDir         string `json:"serviceDir"`
@@ -37,22 +39,27 @@ var config Config
 
 func loadConfig() error {
 
-	file, err := os.Open("./config/config.json")
+	configPath := "/etc/codegen/config/config.json"
+	if _, err := os.Stat(configPath); os.IsExist(err) {
+
+	}
+	file, err := os.Open(configPath)
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatalf("Error opening config: %v", err)
 	}
 	defer file.Close()
-
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&config)
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatalf("Error decoding config: %v", err)
 	}
-
 	return nil
 }
-
 func GenerateFiles(input string) error {
+	if isCreatedBefore(input) {
+		log.Fatalf("Error: files created before with given input : %s", input)
+
+	}
 	if err := loadConfig(); err != nil {
 
 		log.Fatalf("Error: %v", err)
@@ -80,30 +87,23 @@ func GenerateFiles(input string) error {
 		CapitalizedName: capitalizedName,
 		ModuleName:      moduleName,
 	}
-
 	if err := scanner.Err(); err != nil {
 		log.Fatalf("Error reading file: %v", err)
-
 	}
 	if err := generateController(variables); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
-
 	if err = generateEntity(variables); err != nil {
 		log.Fatalf("Error: %v", err)
-
 	}
 	if err = generateInit(variables); err != nil {
 		log.Fatalf("Error: %v", err)
-
 	}
 	if err = generateRepository(variables); err != nil {
 		log.Fatalf("Error: %v", err)
-
 	}
 	if err = generateService(variables); err != nil {
 		log.Fatalf("Error: %v", err)
-
 	}
 	return nil
 }
@@ -126,6 +126,7 @@ func generateEntity(variables Variables) error {
 		log.Fatalf("Error: %v", err)
 	}
 	defer entityFile.Close()
+	log.Println("done")
 
 	data := Variables{
 		Name:            variables.Name,
@@ -135,7 +136,29 @@ func generateEntity(variables Variables) error {
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
+	// base creation
+	baseFilePath := fmt.Sprintf("%s/Base.go", dirPath)
+	if _, err := os.Stat(baseFilePath); os.IsNotExist(err) {
+		baseTemplate := config.BaseTemplate
+		tmpl, err = template.ParseFiles(baseTemplate)
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		}
+		log.Println("Creating base class ...")
+		baseFile, err := os.Create(fmt.Sprintf("%s/Base.go", dirPath))
 
+		if err != nil {
+			log.Fatalf("Error creating Base.go: %v", err)
+		}
+		defer baseFile.Close()
+		log.Println("done")
+
+		err = tmpl.Execute(baseFile, nil)
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		}
+		return nil
+	}
 	return nil
 }
 
@@ -156,6 +179,7 @@ func generateRepository(variables Variables) error {
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
+
 	data := Variables{
 		Name:            variables.Name,
 		CapitalizedName: variables.CapitalizedName,
@@ -166,9 +190,12 @@ func generateRepository(variables Variables) error {
 		log.Fatalf("Error: %v", err)
 	}
 	defer repositoryFile.Close()
+
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
+	log.Println("done")
+
 	return nil
 }
 
@@ -200,6 +227,8 @@ func generateService(variables Variables) error {
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
+	log.Println("done")
+
 	return nil
 }
 
@@ -231,6 +260,8 @@ func generateController(variables Variables) error {
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
+	log.Println("done")
+
 	return nil
 }
 
@@ -262,8 +293,11 @@ func generateInit(variables Variables) error {
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
+	log.Println("done")
+
 	return nil
 }
+
 func fixName(name string) string {
 	nameChars := strings.Split(name, "")
 	lastChar := nameChars[len(nameChars)-1]
@@ -277,4 +311,17 @@ func fixName(name string) string {
 		fixed = name + "s"
 	}
 	return fixed
+}
+
+func isCreatedBefore(input string) bool {
+	basePath := "./app/services/"
+	filePath := filepath.Join(basePath, fmt.Sprintf("%s/%s.go", input, input))
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return false
+	} else if err != nil {
+		log.Fatalf("Error : %v", err)
+	} else {
+		return true
+	}
+	return false
 }

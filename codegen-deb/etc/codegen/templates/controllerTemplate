@@ -1,12 +1,12 @@
-package %ss
+package {{.Name}}s
 
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"%s/app/entities"
-	"%s/app/services/%s"
-	"%s/internal/validation"
-	"%s/pkg/di"
+	"{{.ModuleName}}/app/entities"
+	"{{.ModuleName}}/app/services/{{.Name}}"
+	"{{.ModuleName}}/internal/validation"
+	"{{.ModuleName}}/pkg/di"
 )
 
 // Create controller
@@ -14,12 +14,12 @@ func Create(c *fiber.Ctx) error {
 	// Create scope
 	scope := c.Locals("scope").(*di.Scope)
 	// Get service
-	service, err := di.GetService[%s.Service](scope)
+	service, err := di.GetService[{{.Name}}.Service](scope)
 	if err != nil {
 		return err
 	}
 	// Parse request body
-	var request *entities.%s
+	var request *entities.{{.CapitalizedName}}
 	if err := c.BodyParser(&request); err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func Index(c *fiber.Ctx) error {
 	// Create scope
 	scope := c.Locals("scope").(*di.Scope)
 	// Get service
-	service, err := di.GetService[%s.Service](scope)
+	service, err := di.GetService[{{.Name}}.Service](scope)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func Show(c *fiber.Ctx) error {
 	// Create scope
 	scope := c.Locals("scope").(*di.Scope)
 	// Get service
-	service, err := di.GetService[%s.Service](scope)
+	service, err := di.GetService[{{.Name}}.Service](scope)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func Update(c *fiber.Ctx) error {
 	// Create scope
 	scope := c.Locals("scope").(*di.Scope)
 	// Get service
-	service, err := di.GetService[%s.Service](scope)
+	service, err := di.GetService[{{.Name}}.Service](scope)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func Update(c *fiber.Ctx) error {
 		return err
 	}
 	// Parse body
-	var request entities.%s
+	var request entities.{{.CapitalizedName}}
 	if err := c.BodyParser(&request); err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func Delete(c *fiber.Ctx) error {
 	// Create scope
 	scope := c.Locals("scope").(*di.Scope)
 	// Get service
-	service, err := di.GetService[%s.Service](scope)
+	service, err := di.GetService[{{.Name}}.Service](scope)
 	if err != nil {
 		return err
 	}

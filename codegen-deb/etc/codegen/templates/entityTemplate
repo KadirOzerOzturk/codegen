@@ -1,5 +1,5 @@
 package entities
 
-type %s struct{
+type {{.CapitalizedName}} struct{
 	Base
 }

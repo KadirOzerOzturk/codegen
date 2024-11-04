@@ -1,19 +1,19 @@
-package %s
+package {{.Name}}
 
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"%s/app/entities"
-	"%s/internal/paginator"
-	"%s/pkg/utils"
+	"{{.ModuleName}}/app/entities"
+	"{{.ModuleName}}/internal/paginator"
+	"{{.ModuleName}}/pkg/utils"
 )
 
 // Service interface
 type Service interface {
-	Create(payload *entities.%s) error
+	Create(payload *entities.{{.CapitalizedName}}) error
 	Index(c *fiber.Ctx) (*paginator.Data, error)
-	Show(id *uuid.UUID) (*entities.%s, error)
-	Update(id *uuid.UUID, payload *entities.%s) error
+	Show(id *uuid.UUID) (*entities.{{.CapitalizedName}}, error)
+	Update(id *uuid.UUID, payload *entities.{{.CapitalizedName}}) error
 	Delete(id *uuid.UUID) error
 }
 
@@ -30,7 +30,7 @@ func NewService(r Repository) Service {
 }
 
 // Create service
-func (s *service) Create(payload *entities.%s) error {
+func (s *service) Create(payload *entities.{{.CapitalizedName}}) error {
 	return s.repository.Insert(payload)
 }
 
@@ -43,12 +43,12 @@ func (s *service) Index(c *fiber.Ctx) (*paginator.Data, error) {
 }
 
 // Show service
-func (s *service) Show(id *uuid.UUID) (*entities.%s, error) {
+func (s *service) Show(id *uuid.UUID) (*entities.{{.CapitalizedName}}, error) {
 	return s.repository.Get(id)
 }
 
 // Update service
-func (s *service) Update(id *uuid.UUID, payload *entities.%s) error {
+func (s *service) Update(id *uuid.UUID, payload *entities.{{.CapitalizedName}}) error {
 	return s.repository.Update(id, payload)
 }
 

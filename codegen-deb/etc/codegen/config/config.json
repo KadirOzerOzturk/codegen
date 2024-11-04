@@ -1,0 +1,14 @@
+{
+    "entityTemplate": "/etc/codegen/templates/entityTemplate",
+    "initTemplate": "/etc/codegen/templates/initTemplate",
+    "serviceTemplate": "/etc/codegen/templates/serviceTemplate",
+    "controllerTemplate": "/etc/codegen/templates/controllerTemplate",
+    "repositoryTemplate": "/etc/codegen/templates/repositoryTemplate",
+    "baseTemplate": "/etc/codegen/templates/baseTemplate",
+    "entitiesDir": "./app/entities",
+    "repositoryDir": "./app/services",
+    "serviceDir": "./app/services",
+    "initDir": "./app/services",
+    "controllerDir": "./app/controllers"
+   
+}
