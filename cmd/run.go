@@ -13,10 +13,12 @@ var runCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
+
 		helpers.GenerateFiles(name)
 	},
 }
 
 func init() {
+
 	rootCmd.AddCommand(runCmd)
 }

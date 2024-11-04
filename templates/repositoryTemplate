@@ -1,19 +1,19 @@
-package %s
+package {{.Name}}
 
 import (
 	"github.com/google/uuid"
-	"%s/app/entities"
-	"%s/internal/paginator"
-	"%s/internal/search"
+	"{{.ModuleName}}/app/entities"
+	"{{.ModuleName}}/internal/paginator"
+	"{{.ModuleName}}/internal/search"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type Repository interface {
-	Insert(payload *entities.%s) error
+	Insert(payload *entities.{{.CapitalizedName}}) error
 	List(page, per_page int, sort string, query string, filter []entities.Filter) (*paginator.Data, error)
-	Get(id *uuid.UUID) (*entities.%s, error)
-	Update(id *uuid.UUID, payload *entities.%s) error
+	Get(id *uuid.UUID) (*entities.{{.CapitalizedName}}, error)
+	Update(id *uuid.UUID, payload *entities.{{.CapitalizedName}}) error
 	Delete(id *uuid.UUID) error
 }
 
@@ -30,7 +30,7 @@ func NewRepo(DB *gorm.DB) Repository {
 }
 
 // Insert repository
-func (r *repository) Insert(payload *entities.%s) error {
+func (r *repository) Insert(payload *entities.{{.CapitalizedName}}) error {
 	if err := r.DB.Create(payload).Error; err != nil {
 		return err
 	}
@@ -39,8 +39,8 @@ func (r *repository) Insert(payload *entities.%s) error {
 
 // List repository
 func (r *repository) List(page, per_page int, sort string, query string, filter []entities.Filter) (*paginator.Data, error) {
-	items := []*entities.%s{}
-	db := r.DB.Model(&entities.%s{}).Preload(clause.Associations)
+	items := []*entities.{{.CapitalizedName}}{}
+	db := r.DB.Model(&entities.{{.CapitalizedName}}{}).Preload(clause.Associations)
 	if query != "" {
 		search.Search(query, db)
 	}
@@ -54,8 +54,8 @@ func (r *repository) List(page, per_page int, sort string, query string, filter 
 }
 
 // Get repository
-func (r *repository) Get(id *uuid.UUID) (*entities.%s, error) {
-	item := entities.%s{}
+func (r *repository) Get(id *uuid.UUID) (*entities.{{.CapitalizedName}}, error) {
+	item := entities.{{.CapitalizedName}}{}
 	if err := r.DB.Model(&item).First(&item, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (r *repository) Get(id *uuid.UUID) (*entities.%s, error) {
 }
 
 // Update repository
-func (r *repository) Update(id *uuid.UUID, payload *entities.%s) error {
+func (r *repository) Update(id *uuid.UUID, payload *entities.{{.CapitalizedName}}) error {
 	item, err := r.Get(id)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (r *repository) Update(id *uuid.UUID, payload *entities.%s) error {
 
 // Delete repository
 func (r *repository) Delete(id *uuid.UUID) error {
-	if err := r.DB.Where("id = ?", id).Delete(&entities.%s{}).Error; err != nil {
+	if err := r.DB.Where("id = ?", id).Delete(&entities.{{.CapitalizedName}}{}).Error; err != nil {
 		return err
 	}
 

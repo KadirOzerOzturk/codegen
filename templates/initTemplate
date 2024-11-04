@@ -1,9 +1,9 @@
-package %s
+package {{.Name}}
 
 import (
-	"%s/internal/database"
-	"%s/internal/service_collection"
-	"%s/pkg/di"
+	"{{.ModuleName}}/internal/database"
+	"{{.ModuleName}}/internal/service_collection"
+	"{{.ModuleName}}/pkg/di"
 )
 
 // Inject dependencies

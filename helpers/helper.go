@@ -2,7 +2,10 @@ package helpers
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"html/template"
+	"log"
 	"os"
 	"strings"
 )
@@ -11,22 +14,48 @@ var dirName string
 var moduleName string
 var capitalizedName string
 
-type Task struct {
-	name    string
-	execute func() error
+type Variables struct {
+	Name            string
+	CapitalizedName string
+	ModuleName      string
+}
+type Config struct {
+	EntityTemplate     string `json:"entityTemplate"`
+	InitTemplate       string `json:"initTemplate"`
+	ServiceTemplate    string `json:"serviceTemplate"`
+	ControllerTemplate string `json:"controllerTemplate"`
+	RepositoryTemplate string `json:"repositoryTemplate"`
+	EntitiesDir        string `json:"entitiesDir"`
+	RepositoryDir      string `json:"repositoryDir"`
+	ServiceDir         string `json:"serviceDir"`
+	InitDir            string `json:"initDir"`
+	ControllerDir      string `json:"controllerDir"`
+}
+
+var config Config
+
+func loadConfig() error {
+
+	file, err := os.Open("./config/config.json")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&config)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GenerateFiles(input string) error {
-	tasks := []Task{
-		{"Entity", genereteEntity},
-		{"Controller", genereteController},
-		{"Init", genereteInit},
-		{"Repository", genereteRepository},
-		{"Service", genereteService},
+	if err := loadConfig(); err != nil {
+		log.Fatal(err.Error())
+		return err
 	}
-	dirName = input
-	capitalizedName = strings.ToUpper(dirName[:1]) + strings.ToLower(dirName[1:])
-
 	file, err := os.Open("go.mod")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -43,75 +72,99 @@ func GenerateFiles(input string) error {
 			break
 		}
 	}
+	dirName = input
+	capitalizedName = strings.ToUpper(dirName[:1]) + strings.ToLower(dirName[1:])
+	variables := Variables{
+		Name:            dirName,
+		CapitalizedName: capitalizedName,
+		ModuleName:      moduleName,
+	}
+
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading file:", err)
 		return err
 	}
-	for _, task := range tasks {
-		if err := task.execute(); err != nil {
-			return fmt.Errorf("%s generation failed: %w", task.name, err)
-		}
+	if err := generateController(variables); err != nil {
+		log.Fatalf("Error: %v", err)
 	}
 
+	if err = generateEntity(variables); err != nil {
+		log.Fatalf("Error: %v", err)
+
+	}
+	if err = generateInit(variables); err != nil {
+		log.Fatalf("Error: %v", err)
+
+	}
+	if err = generateRepository(variables); err != nil {
+		log.Fatalf("Error: %v", err)
+
+	}
+	if err = generateService(variables); err != nil {
+		log.Fatalf("Error: %v", err)
+
+	}
 	return nil
 }
 
 // entity creation
-func genereteEntity() error {
-	dirPath := "./app/entities"
+func generateEntity(variables Variables) error {
+	dirPath := config.EntitiesDir
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
 		return err
 	}
-	entityTemplate := "./templates/entityTemplate"
 
-	entityContent, err := os.ReadFile(entityTemplate)
+	entityTemplate := config.EntityTemplate
+	tmpl, err := template.ParseFiles(entityTemplate)
 	if err != nil {
 		return err
 	}
-	entityTemplateStr := string(entityContent)
-	entity := fmt.Sprintf(entityTemplateStr, capitalizedName)
-	err = os.WriteFile(fmt.Sprintf("./app/entities/%s.go", dirName), []byte(entity), 0644)
 
+	entityFile, err := os.Create(fmt.Sprintf("%s/%s.go", dirPath, variables.CapitalizedName))
 	if err != nil {
-		fmt.Println("Error writing file:", err)
 		return err
 	}
+	defer entityFile.Close()
+
+	data := Variables{
+		Name:            variables.Name,
+		CapitalizedName: variables.CapitalizedName,
+	}
+	err = tmpl.Execute(entityFile, data)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // repository creation
-func genereteRepository() error {
-	repositoryTemplate := "./templates/repositoryTemplate"
+func generateRepository(variables Variables) error {
+	dirPath := fmt.Sprintf(config.RepositoryDir+"/%s", dirName)
+	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+		return err
+	}
 
-	repoContent, err := os.ReadFile(repositoryTemplate)
+	repositoryTemplate := config.RepositoryTemplate
+	tmpl, err := template.ParseFiles(repositoryTemplate)
 	if err != nil {
 		return err
 	}
 
-	repositoryTemplateStr := string(repoContent)
-	repository := fmt.Sprintf(
-		repositoryTemplateStr,
-		dirName,
-		moduleName,
-		moduleName,
-		moduleName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName)
-
-	dirPath := fmt.Sprintf("./app/services/%s", dirName)
-	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+	repositoryFile, err := os.Create(fmt.Sprintf("%s/%s/repository.go", config.RepositoryDir, dirName))
+	if err != nil {
 		return err
 	}
-	err = os.WriteFile(fmt.Sprintf("./app/services/%s/repository.go", dirName), []byte(repository), 0644)
-
+	data := Variables{
+		Name:            variables.Name,
+		CapitalizedName: variables.CapitalizedName,
+		ModuleName:      variables.ModuleName,
+	}
+	err = tmpl.Execute(repositoryFile, data)
+	if err != nil {
+		return err
+	}
+	defer repositoryFile.Close()
 	if err != nil {
 		fmt.Println("Error writing file:", err)
 		return err
@@ -120,27 +173,28 @@ func genereteRepository() error {
 }
 
 // service creation
-func genereteService() error {
-	serviceTemplate := "./templates/serviceTemplate"
+func generateService(variables Variables) error {
+	dirPath := fmt.Sprintf(config.ServiceDir+"/%s", dirName)
 
-	serviceContent, err := os.ReadFile(serviceTemplate)
+	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+		return err
+	}
+	serviceTemplate := config.ServiceTemplate
+	tmpl, err := template.ParseFiles(serviceTemplate)
 	if err != nil {
 		return err
 	}
-	serviceTemplateStr := string(serviceContent)
-	service := fmt.Sprintf(serviceTemplateStr,
-		dirName,
-		moduleName,
-		moduleName,
-		moduleName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName,
-		capitalizedName)
-
-	err = os.WriteFile(fmt.Sprintf("./app/services/%s/service.go", dirName), []byte(service), 0644)
+	data := Variables{
+		Name:            variables.Name,
+		CapitalizedName: variables.CapitalizedName,
+		ModuleName:      variables.ModuleName,
+	}
+	serviceFile, err := os.Create(fmt.Sprintf("%s/%s/service.go", config.ServiceDir, dirName))
+	if err != nil {
+		return err
+	}
+	defer serviceFile.Close()
+	err = tmpl.Execute(serviceFile, data)
 
 	if err != nil {
 		fmt.Println("Error writing file:", err)
@@ -150,65 +204,76 @@ func genereteService() error {
 }
 
 // controller creation
-func genereteController() error {
-	dirPath := fmt.Sprintf("./app/controllers/%ss", dirName)
+func generateController(variables Variables) error {
+	fixedName := fixName(variables.Name)
+	dirPath := fmt.Sprintf(config.ControllerDir+"/%s", fixedName)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
 		return err
 	}
-	controllerTemplate := "./templates/controllerTemplate"
+	controllerTemplate := config.ControllerTemplate
 
-	controllerContent, err := os.ReadFile(controllerTemplate)
+	tmpl, err := template.ParseFiles(controllerTemplate)
 	if err != nil {
 		return err
 	}
-	controllerTemplateStr := string(controllerContent)
-	controller := fmt.Sprintf(controllerTemplateStr,
-		dirName,
-		moduleName,
-		moduleName,
-		dirName,
-		moduleName,
-		moduleName,
-		dirName,
-		capitalizedName,
-		dirName,
-		dirName,
-		dirName,
-		capitalizedName,
-		dirName)
-
-	err = os.WriteFile(fmt.Sprintf("./app/controllers/%ss/%ss.go", dirName, dirName), []byte(controller), 0644)
+	controllerFile, err := os.Create(fmt.Sprintf("%s/%s/%s.go", config.ControllerDir, fixedName, fixedName))
 	if err != nil {
-		fmt.Println("Error writing file:", err)
+		return err
+	}
+	defer controllerFile.Close()
+	data := Variables{
+		Name:            fixedName,
+		CapitalizedName: variables.CapitalizedName,
+		ModuleName:      variables.ModuleName,
+	}
+	err = tmpl.Execute(controllerFile, data)
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
 // init creation
-func genereteInit() error {
-	dirPath := fmt.Sprintf("./app/services/%s", dirName)
+func generateInit(variables Variables) error {
+	dirPath := fmt.Sprintf(config.InitDir+"/%s", dirName)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
 		return err
 	}
-	initTemplate := "./templates/initTemplate"
+	initTemplate := config.InitTemplate
 
-	initContent, err := os.ReadFile(initTemplate)
+	tmpl, err := template.ParseFiles(initTemplate)
 	if err != nil {
 		return err
 	}
-	initTemplateStr := string(initContent)
-	init := fmt.Sprintf(
-		initTemplateStr,
-		dirName,
-		moduleName,
-		moduleName,
-		moduleName)
-	err = os.WriteFile(fmt.Sprintf("./app/services/%s/init.go", dirName), []byte(init), 0644)
 
+	initFile, err := os.Create(fmt.Sprintf("%s/%s.go", dirPath, variables.Name))
 	if err != nil {
-		fmt.Println("Error writing file:", err)
+		return err
+	}
+	defer initFile.Close()
+
+	data := Variables{
+		Name:            variables.Name,
+		CapitalizedName: variables.CapitalizedName,
+		ModuleName:      variables.ModuleName,
+	}
+	err = tmpl.Execute(initFile, data)
+	if err != nil {
 		return err
 	}
 	return nil
+}
+func fixName(name string) string {
+	nameChars := strings.Split(name, "")
+	lastChar := nameChars[len(nameChars)-1]
+	var fixed string
+	switch lastChar {
+	case "s":
+		fixed = name + "es"
+	case "y":
+		fixed = name[:len(name)-1] + "ies"
+	default:
+		fixed = name + "s"
+	}
+	return fixed
 }
