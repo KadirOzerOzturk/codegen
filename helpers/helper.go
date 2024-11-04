@@ -19,6 +19,7 @@ type Variables struct {
 	CapitalizedName string
 	ModuleName      string
 }
+
 type Config struct {
 	EntityTemplate     string `json:"entityTemplate"`
 	InitTemplate       string `json:"initTemplate"`
@@ -38,14 +39,14 @@ func loadConfig() error {
 
 	file, err := os.Open("./config/config.json")
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&config)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 
 	return nil
@@ -53,13 +54,13 @@ func loadConfig() error {
 
 func GenerateFiles(input string) error {
 	if err := loadConfig(); err != nil {
-		log.Fatal(err.Error())
-		return err
+
+		log.Fatalf("Error: %v", err)
 	}
 	file, err := os.Open("go.mod")
 	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return err
+
+		log.Fatalf("Error: %v", err)
 	}
 	defer file.Close()
 
@@ -81,8 +82,8 @@ func GenerateFiles(input string) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading file:", err)
-		return err
+		log.Fatalf("Error reading file: %v", err)
+
 	}
 	if err := generateController(variables); err != nil {
 		log.Fatalf("Error: %v", err)
@@ -111,18 +112,18 @@ func GenerateFiles(input string) error {
 func generateEntity(variables Variables) error {
 	dirPath := config.EntitiesDir
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 
 	entityTemplate := config.EntityTemplate
 	tmpl, err := template.ParseFiles(entityTemplate)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
-
+	log.Println("Creating etitiy class ...")
 	entityFile, err := os.Create(fmt.Sprintf("%s/%s.go", dirPath, variables.CapitalizedName))
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	defer entityFile.Close()
 
@@ -132,7 +133,7 @@ func generateEntity(variables Variables) error {
 	}
 	err = tmpl.Execute(entityFile, data)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 
 	return nil
@@ -142,18 +143,18 @@ func generateEntity(variables Variables) error {
 func generateRepository(variables Variables) error {
 	dirPath := fmt.Sprintf(config.RepositoryDir+"/%s", dirName)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 
 	repositoryTemplate := config.RepositoryTemplate
 	tmpl, err := template.ParseFiles(repositoryTemplate)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
-
+	log.Println("Creating repository class ...")
 	repositoryFile, err := os.Create(fmt.Sprintf("%s/%s/repository.go", config.RepositoryDir, dirName))
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	data := Variables{
 		Name:            variables.Name,
@@ -162,12 +163,11 @@ func generateRepository(variables Variables) error {
 	}
 	err = tmpl.Execute(repositoryFile, data)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	defer repositoryFile.Close()
 	if err != nil {
-		fmt.Println("Error writing file:", err)
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	return nil
 }
@@ -177,28 +177,28 @@ func generateService(variables Variables) error {
 	dirPath := fmt.Sprintf(config.ServiceDir+"/%s", dirName)
 
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	serviceTemplate := config.ServiceTemplate
 	tmpl, err := template.ParseFiles(serviceTemplate)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	data := Variables{
 		Name:            variables.Name,
 		CapitalizedName: variables.CapitalizedName,
 		ModuleName:      variables.ModuleName,
 	}
+	log.Println("Creating service class ...")
 	serviceFile, err := os.Create(fmt.Sprintf("%s/%s/service.go", config.ServiceDir, dirName))
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	defer serviceFile.Close()
 	err = tmpl.Execute(serviceFile, data)
 
 	if err != nil {
-		fmt.Println("Error writing file:", err)
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	return nil
 }
@@ -208,17 +208,18 @@ func generateController(variables Variables) error {
 	fixedName := fixName(variables.Name)
 	dirPath := fmt.Sprintf(config.ControllerDir+"/%s", fixedName)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	controllerTemplate := config.ControllerTemplate
 
 	tmpl, err := template.ParseFiles(controllerTemplate)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
+	log.Println("Creating controller class ...")
 	controllerFile, err := os.Create(fmt.Sprintf("%s/%s/%s.go", config.ControllerDir, fixedName, fixedName))
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	defer controllerFile.Close()
 	data := Variables{
@@ -228,7 +229,7 @@ func generateController(variables Variables) error {
 	}
 	err = tmpl.Execute(controllerFile, data)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	return nil
 }
@@ -237,18 +238,18 @@ func generateController(variables Variables) error {
 func generateInit(variables Variables) error {
 	dirPath := fmt.Sprintf(config.InitDir+"/%s", dirName)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	initTemplate := config.InitTemplate
 
 	tmpl, err := template.ParseFiles(initTemplate)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
-
+	log.Println("Creating init class ...")
 	initFile, err := os.Create(fmt.Sprintf("%s/%s.go", dirPath, variables.Name))
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	defer initFile.Close()
 
@@ -259,7 +260,7 @@ func generateInit(variables Variables) error {
 	}
 	err = tmpl.Execute(initFile, data)
 	if err != nil {
-		return err
+		log.Fatalf("Error: %v", err)
 	}
 	return nil
 }
