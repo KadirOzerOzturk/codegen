@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/KadirOzerOzturk/deneme/helpers"
 	"github.com/spf13/cobra"
 )
@@ -29,9 +27,10 @@ var deleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
 
-		fmt.Println("delete template : " + name)
+		helpers.DeleteFiles(name)
 	},
 }
+
 func init() {
 
 	rootCmd.AddCommand(runCmd)

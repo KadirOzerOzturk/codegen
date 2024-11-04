@@ -325,3 +325,97 @@ func isCreatedBefore(input string) bool {
 	}
 	return false
 }
+func DeleteFiles(input string) {
+
+	basePath := "./app/services/"
+
+	filePath := filepath.Join(basePath, fmt.Sprintf("%s/%s.go", input, input))
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		fmt.Println("Dosya yok:", filePath)
+	} else if err != nil {
+		fmt.Println("Dosyaya erişim hatası:", err)
+	} else {
+		fmt.Println("Dosya mevcut:", filePath)
+		deleteEntities(input)
+		deleteControllers(input)
+		deleteServices(input)
+	}
+
+}
+
+func deleteControllers(input string) error {
+	deleteFile := fixName(input)
+	basePath := "./app/controllers"
+	filePath := filepath.Join(basePath, fmt.Sprintf("%s", deleteFile))
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		log.Fatalf("Error: %v", err)
+	} else if err != nil {
+		log.Fatalf("Error: %v", err)
+	} else {
+		fmt.Println("controllers mevcut:", filePath)
+
+		err := os.RemoveAll("./" + filePath)
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		} else {
+			fmt.Println("delete is success " + filePath)
+			return nil
+		}
+
+	}
+	return nil
+
+}
+
+func deleteEntities(input string) error {
+	deleteFile := strings.ToUpper(input[:1]) + strings.ToLower(input[1:])
+	fmt.Println(deleteFile)
+	basePath := "./app/entities"
+	filePath := filepath.Join(basePath, fmt.Sprintf("%s.go", deleteFile))
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		log.Fatalf("Error: %v", err)
+	} else if err != nil {
+		log.Fatalf("Error: %v", err)
+	} else {
+		fmt.Println("entities mevcut:", filePath)
+
+		err := os.RemoveAll("./" + filePath)
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		} else {
+			fmt.Println("delete is success " + filePath)
+			return nil
+		}
+
+	}
+	return nil
+
+}
+
+func deleteServices(input string) error {
+	deleteFile := input
+	fmt.Println(deleteFile)
+	basePath := "./app/services"
+	filePath := filepath.Join(basePath, fmt.Sprintf("%s", deleteFile))
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		log.Fatalf("Error: %v", err)
+	} else if err != nil {
+		log.Fatalf("Error: %v", err)
+	} else {
+		fmt.Println("services mevcut:", filePath)
+
+		err := os.RemoveAll("./" + filePath)
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		} else {
+			fmt.Println("delete is success " + filePath)
+			return nil
+		}
+
+	}
+	return nil
+
+}
