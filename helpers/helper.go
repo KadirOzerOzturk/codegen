@@ -66,7 +66,7 @@ func genereteEntity() error {
 
 	entityContent, err := os.ReadFile(entityTemplate)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	entityTemplateStr := string(entityContent)
 	entity := fmt.Sprintf(entityTemplateStr, capitalizedName)
@@ -159,7 +159,7 @@ func genereteController() error {
 
 	controllerContent, err := os.ReadFile(controllerTemplate)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	controllerTemplateStr := string(controllerContent)
 	controller := fmt.Sprintf(controllerTemplateStr,
@@ -189,16 +189,21 @@ func genereteController() error {
 func genereteInit() error {
 	dirPath := fmt.Sprintf("./app/services/%s", dirName)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		err.Error()
+		return err
 	}
 	initTemplate := "./templates/initTemplate"
 
 	initContent, err := os.ReadFile(initTemplate)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	initTemplateStr := string(initContent)
-	init := fmt.Sprintf(initTemplateStr, dirName, moduleName, moduleName, moduleName)
+	init := fmt.Sprintf(
+		initTemplateStr,
+		dirName,
+		moduleName,
+		moduleName,
+		moduleName)
 	err = os.WriteFile(fmt.Sprintf("./app/services/%s/init.go", dirName), []byte(init), 0644)
 
 	if err != nil {
