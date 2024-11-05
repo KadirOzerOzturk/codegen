@@ -6,9 +6,7 @@
 ## Installation
 
 To install codegen, use the following command:
-```
-  wget  https://github.com/KadirOzerOzturk/codegen/blob/main/codegen-deb.deb
-```
+
 ```bash
   sudo dpkg -i codegen-deb.deb  
 ```
