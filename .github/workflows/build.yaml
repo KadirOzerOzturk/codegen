@@ -58,7 +58,7 @@ jobs:
         sudo cp ./scripts/debian/control $DEBIAN_PATH/control
         sudo cp ./scripts/debian/postinst $DEBIAN_PATH/postinst
         sudo cp codegen $SERVER_BIN_PATH/codegen
-        sudo cp .env.example $SERVER_BIN_PATH/.env.example
+        
         sudo cp -r templates/* $TEMPLATES_PATH/
         sudo cp -r config/* $CONFIG_PATH/
          
