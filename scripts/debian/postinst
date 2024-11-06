@@ -1,10 +1,7 @@
 #!/bin/bash
+chown -R root:root /usr/bin/codegen
+chmod -R 777 /usr/bin/codegen
 
-# Sahiplik ve izinleri ayarla
-chown -R root:root /opt/codegen
-chmod -R 770 /opt/codegen
-
-# Eğer servis dosyası zaten varsa, kaldır ve servisi durdur
 if [ -f "/usr/lib/systemd/system/codegen.service" ]; then
     rm -rf /usr/lib/systemd/system/codegen.service 2>/dev/null || true
     systemctl disable codegen.service 2>/dev/null || true
@@ -12,14 +9,13 @@ if [ -f "/usr/lib/systemd/system/codegen.service" ]; then
     systemctl daemon-reload 2>/dev/null || true
 fi
 
-# Yeni servis dosyasını oluştur
 cat <<EOF > /etc/systemd/system/codegen.service
 [Unit]
 Description=Code generator - cli tool
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/codegen
+WorkingDirectory=/usr/bin
 ExecStart=/usr/bin/codegen
 Restart=always
 RestartSec=10
@@ -32,7 +28,6 @@ Group=root
 WantedBy=multi-user.target
 EOF
 
-# Sistemd işlemlerini gerçekleştir
 systemctl daemon-reload
 systemctl enable codegen.service
 systemctl restart codegen.service

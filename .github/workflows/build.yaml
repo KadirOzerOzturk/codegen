@@ -43,7 +43,6 @@ jobs:
         sudo apt install rpm -y
         TMP_DIR=/tmp/codegen-build
         DEBIAN_PATH=$TMP_DIR/DEBIAN
-        SERVER_BIN_PATH=$TMP_DIR/opt/codegen
         BIN_PATH=$TMP_DIR/usr/bin
         TEMPLATES_PATH=$TMP_DIR/etc/codegen/templates
         CONFIG_PATH=$TMP_DIR/etc/codegen/config
@@ -52,15 +51,13 @@ jobs:
 
         sudo mkdir -p $TMP_DIR
         sudo mkdir -p $DEBIAN_PATH
-        sudo mkdir -p $SERVER_BIN_PATH
         sudo mkdir -p $BIN_PATH
         sudo mkdir -p $TEMPLATES_PATH
         sudo mkdir -p $CONFIG_PATH
         
         sudo cp ./scripts/debian/control $DEBIAN_PATH/control
         sudo cp ./scripts/debian/postinst $DEBIAN_PATH/postinst
-        sudo cp codegen $SERVER_BIN_PATH/codegen
-        sudo ln -s /opt/codegen/codegen $BIN_PATH/codegen
+        sudo cp codegen $BIN_PATH/codegen
         sudo cp -r templates/* $TEMPLATES_PATH/
         sudo cp -r config/* $CONFIG_PATH/
         
@@ -73,7 +70,7 @@ jobs:
         sudo rm -rf $DEBIAN_PATH
 
         sudo sed -i s/%VERSION%/${{ github.run_number }}/g scripts/redhat/app.spec
-        sudo rpmbuild -ba scripts/redhat/app.spec --define "_app_dir $TMP_DIR/opt/codegen" --define "_rpmdir /tmp" --define "_rpmfilename codegen-${{ github.run_number }}-x64.rpm"
+        sudo rpmbuild -ba scripts/redhat/app.spec --define "_app_dir $TMP_DIR/usr/bin" --define "_rpmdir /tmp" --define "_rpmfilename codegen-${{ github.run_number }}-x64.rpm"
 
     - name: Release
       id: create_release

@@ -3,7 +3,7 @@ Version: %VERSION%
 Release: 0
 License: MIT
 Requires: openssl
-Prefix: /opt
+Prefix: /usr
 Summary: Code generator - cli tool
 Group: Applications/System
 BuildArch: x86_64
@@ -18,14 +18,12 @@ Code generator - cli tool
 %build
 
 %install
-mkdir -p %{buildroot}/opt/codegen
 mkdir -p %{buildroot}/usr/bin
-cp -rfa %{_app_dir}/* %{buildroot}/opt/codegen
-ln -s /opt/codegen/codegen %{buildroot}/usr/bin/codegen
+cp -rfa %{_app_dir}/* %{buildroot}/usr/bin
 
 %post -p /bin/bash
-chown -R root:root /opt/codegen
-chmod -R 770 /opt/codegen
+chown -R root:root /usr/bin/codegen
+chmod -R 777 /usr/bin/codegen
 
 if [ -f "/usr/lib/systemd/system/codegen.service" ]; then
     rm -rf /usr/lib/systemd/system/codegen.service
@@ -40,7 +38,7 @@ Description=Code generator - cli tool
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/codegen
+WorkingDirectory=/usr/bin
 ExecStart=/usr/bin/codegen
 Restart=always
 RestartSec=10
@@ -61,7 +59,6 @@ systemctl restart codegen.service
 
 %files
 %defattr(0770, root, root)
-/opt/codegen/*
 /usr/bin/codegen
 
 %define _unpackaged_files_terminate_build 0
