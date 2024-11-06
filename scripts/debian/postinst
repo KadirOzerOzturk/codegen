@@ -1,36 +1,38 @@
 #!/bin/bash
 
 # Sahiplik ve izinleri ayarla
-chown -R root:root /opt/offline-inventory
-chmod -R 770 /opt/offline-inventory
+chown -R root:root /opt/codegen
+chmod -R 770 /opt/codegen
 
 # Eğer servis dosyası zaten varsa, kaldır ve servisi durdur
-if [ -f "/usr/lib/systemd/system/offline-inventory.service" ]; then
-    rm -rf /usr/lib/systemd/system/offline-inventory.service 2>/dev/null || true
-    systemctl disable offline-inventory.service 2>/dev/null || true
-    systemctl stop offline-inventory.service 2>/dev/null || true
+if [ -f "/usr/lib/systemd/system/codegen.service" ]; then
+    rm -rf /usr/lib/systemd/system/codegen.service 2>/dev/null || true
+    systemctl disable codegen.service 2>/dev/null || true
+    systemctl stop codegen.service 2>/dev/null || true
     systemctl daemon-reload 2>/dev/null || true
 fi
 
 # Yeni servis dosyasını oluştur
-cat <<EOF > /etc/systemd/system/offline-inventory.service
+cat <<EOF > /etc/systemd/system/codegen.service
 [Unit]
-Description=Offline Inventory Backend Service
+Description=Code generator - cli tool
+
 [Service]
 Type=simple
-WorkingDirectory=/opt/offline-inventory
-ExecStart=/opt/offline-inventory/offline-inventory
+WorkingDirectory=/opt/codegen
+ExecStart=/opt/codegen/codegen
 Restart=always
 RestartSec=10
-SyslogIdentifier=offline-inventory
+SyslogIdentifier=codegen
 KillSignal=SIGINT
 User=root
 Group=root
+
 [Install]
 WantedBy=multi-user.target
 EOF
 
 # Sistemd işlemlerini gerçekleştir
 systemctl daemon-reload
-systemctl enable offline-inventory.service
-systemctl restart offline-inventory.service
+systemctl enable codegen.service
+systemctl restart codegen.service

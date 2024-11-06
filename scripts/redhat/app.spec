@@ -59,6 +59,5 @@ systemctl restart codegen.service
 %files
 %defattr(0770, root, root)
 /opt/codegen/*
-/opt/codegen/.env.example
 
 %define _unpackaged_files_terminate_build 0
