@@ -8,7 +8,7 @@ on:
     types: [sync]
 
 jobs:
-  naming: 
+  naming:
     runs-on: ubuntu-20.04
     steps:
     - id: naming
@@ -43,10 +43,10 @@ jobs:
         sudo apt install rpm -y
         TMP_DIR=/tmp/codegen-build
         DEBIAN_PATH=$TMP_DIR/DEBIAN
-        SERVER_BIN_PATH=/opt/codegen
-        BIN_PATH=/usr/bin
-        TEMPLATES_PATH=/etc/codegen/templates
-        CONFIG_PATH=/etc/codegen/config
+        SERVER_BIN_PATH=$TMP_DIR/opt/codegen
+        BIN_PATH=$TMP_DIR/usr/bin
+        TEMPLATES_PATH=$TMP_DIR/etc/codegen/templates
+        CONFIG_PATH=$TMP_DIR/etc/codegen/config
 
         rm -rf $TMP_DIR
 
@@ -74,16 +74,16 @@ jobs:
 
         sudo sed -i s/%VERSION%/${{ github.run_number }}/g scripts/redhat/app.spec
         sudo rpmbuild -ba scripts/redhat/app.spec --define "_app_dir $TMP_DIR/opt/codegen" --define "_rpmdir /tmp" --define "_rpmfilename codegen-${{ github.run_number }}-x64.rpm"
-    
+
     - name: Release
       id: create_release
       uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       with:
-          files: |
-            /tmp/codegen-${{ github.run_number }}-x64.deb
-            /tmp/codegen-${{ github.run_number }}-x64.rpm
-          name: "${{ needs.naming.outputs.name }}"
-          tag_name: "${{ needs.naming.outputs.tag_name }}"
-          prerelease: ${{ needs.naming.outputs.prerelease }}
+        files: |
+          /tmp/codegen-${{ github.run_number }}-x64.deb
+          /tmp/codegen-${{ github.run_number }}-x64.rpm
+        name: "${{ needs.naming.outputs.name }}"
+        tag_name: "${{ needs.naming.outputs.tag_name }}"
+        prerelease: ${{ needs.naming.outputs.prerelease }}
