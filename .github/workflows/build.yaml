@@ -49,29 +49,29 @@ jobs:
 
         rm -rf $TMP_DIR
 
-        mkdir -p $TMP_DIR
-        mkdir -p $DEBIAN_PATH
-        mkdir -p $SERVER_BIN_PATH
-        mkdir -p $TEMPLATES_PATH
-        mkdir -p $CONFIG_PATH
-        
-        cp ./scripts/debian/control $DEBIAN_PATH/control
-        cp ./scripts/debian/postinst $DEBIAN_PATH/postinst
-        cp codegen $SERVER_BIN_PATH/codegen
-        cp .env.example $SERVER_BIN_PATH/.env.example
-        cp -r templates/* $TEMPLATES_PATH/
-        cp -r config/* $CONFIG_PATH/
-        
-        sed -i s/%VERSION%/${{ github.run_number }}/g $DEBIAN_PATH/control
-        chmod 775 $DEBIAN_PATH/postinst
-
-        dpkg-deb --build $TMP_DIR
-        mv /tmp/codegen-build.deb /tmp/codegen-${{ github.run_number }}-x64.deb
-
-        rm -rf $DEBIAN_PATH
-
-        sed -i s/%VERSION%/${{ github.run_number }}/g scripts/redhat/app.spec
-        rpmbuild -ba scripts/redhat/app.spec --define "_app_dir $TMP_DIR" --define "_rpmdir /tmp" --define "_rpmfilename codegen-${{ github.run_number }}-x64.rpm"
+        sudo mkdir -p $TMP_DIR
+        sudo mkdir -p $DEBIAN_PATH
+        sudo mkdir -p $SERVER_BIN_PATH
+        sudo mkdir -p $TEMPLATES_PATH
+        sudo mkdir -p $CONFIG_PATH
+         
+        sudo cp ./scripts/debian/control $DEBIAN_PATH/control
+        sudo cp ./scripts/debian/postinst $DEBIAN_PATH/postinst
+        sudo cp codegen $SERVER_BIN_PATH/codegen
+        sudo cp .env.example $SERVER_BIN_PATH/.env.example
+        sudo cp -r templates/* $TEMPLATES_PATH/
+        sudo cp -r config/* $CONFIG_PATH/
+         
+        sudo sed -i s/%VERSION%/${{ github.run_number }}/g $DEBIAN_PATH/control
+        sudo chmod 775 $DEBIAN_PATH/postinst
+ 
+        sudo dpkg-deb --build $TMP_DIR
+        sudo mv /tmp/codegen-build.deb /tmp/codegen-${{ github.run_number }}-x64.deb
+ 
+        sudo rm -rf $DEBIAN_PATH
+ 
+        sudo sed -i s/%VERSION%/${{ github.run_number }}/g scripts/redhat/app.spec
+        sudo rpmbuild -ba scripts/redhat/app.spec --define "_app_dir $TMP_DIR" --define "_rpmdir /tmp" --define "_rpmfilename codegen-${{ github.run_number }}-x64.rpm"
     
     - name: Release
       id: create_release
