@@ -1,4 +1,4 @@
-name: Code generator - cli tool
+name: Code Generator CLI Tool
 on:
   push:
     branches-ignore:
@@ -36,14 +36,15 @@ jobs:
     - name: Build App
       run: |
           go get -u && go mod tidy
-          CGO_ENABLED=1 go build -o codegen main.go
+          CGO_ENABLED=1 go build -o codegen cmd/server/main.go
 
     - name: Build .deb & .rpm Packages
       run: |
         sudo apt install rpm -y
         TMP_DIR=/tmp/codegen-build
         DEBIAN_PATH=$TMP_DIR/DEBIAN
-        SERVER_BIN_PATH=/usr/bin
+        SERVER_BIN_PATH=/opt/codegen
+        BIN_PATH=/usr/bin
         TEMPLATES_PATH=/etc/codegen/templates
         CONFIG_PATH=/etc/codegen/config
 
@@ -52,26 +53,27 @@ jobs:
         sudo mkdir -p $TMP_DIR
         sudo mkdir -p $DEBIAN_PATH
         sudo mkdir -p $SERVER_BIN_PATH
+        sudo mkdir -p $BIN_PATH
         sudo mkdir -p $TEMPLATES_PATH
         sudo mkdir -p $CONFIG_PATH
-         
+        
         sudo cp ./scripts/debian/control $DEBIAN_PATH/control
         sudo cp ./scripts/debian/postinst $DEBIAN_PATH/postinst
         sudo cp codegen $SERVER_BIN_PATH/codegen
-        
+        sudo ln -s /opt/codegen/codegen $BIN_PATH/codegen
         sudo cp -r templates/* $TEMPLATES_PATH/
         sudo cp -r config/* $CONFIG_PATH/
-         
+        
         sudo sed -i s/%VERSION%/${{ github.run_number }}/g $DEBIAN_PATH/control
         sudo chmod 775 $DEBIAN_PATH/postinst
- 
+
         sudo dpkg-deb --build $TMP_DIR
         sudo mv /tmp/codegen-build.deb /tmp/codegen-${{ github.run_number }}-x64.deb
- 
+
         sudo rm -rf $DEBIAN_PATH
- 
+
         sudo sed -i s/%VERSION%/${{ github.run_number }}/g scripts/redhat/app.spec
-        sudo rpmbuild -ba scripts/redhat/app.spec --define "_app_dir $TMP_DIR" --define "_rpmdir /tmp" --define "_rpmfilename codegen-${{ github.run_number }}-x64.rpm"
+        sudo rpmbuild -ba scripts/redhat/app.spec --define "_app_dir $TMP_DIR/opt/codegen" --define "_rpmdir /tmp" --define "_rpmfilename codegen-${{ github.run_number }}-x64.rpm"
     
     - name: Release
       id: create_release

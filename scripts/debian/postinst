@@ -20,7 +20,7 @@ Description=Code generator - cli tool
 [Service]
 Type=simple
 WorkingDirectory=/opt/codegen
-ExecStart=/opt/codegen/codegen
+ExecStart=/usr/bin/codegen
 Restart=always
 RestartSec=10
 SyslogIdentifier=codegen
