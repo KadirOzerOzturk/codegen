@@ -36,7 +36,7 @@ jobs:
     - name: Build App
       run: |
           go get -u && go mod tidy
-          CGO_ENABLED=1 go build -o codegen cmd/server/main.go
+          CGO_ENABLED=1 go build -o codegen main.go
 
     - name: Build .deb & .rpm Packages
       run: |
