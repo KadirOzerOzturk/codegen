@@ -121,7 +121,7 @@ func generateEntity(variables Variables) error {
 		log.Fatalf("Error: %v", err)
 	}
 	log.Println("Creating etitiy class ...")
-	entityFile, err := os.Create(fmt.Sprintf("%s/%s.go", dirPath, variables.CapitalizedName))
+	entityFile, err := os.Create(fmt.Sprintf("%s/%s.go", dirPath, convertToCamelCase(variables.CapitalizedName)))
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
@@ -130,7 +130,7 @@ func generateEntity(variables Variables) error {
 
 	data := Variables{
 		Name:            variables.Name,
-		CapitalizedName: variables.CapitalizedName,
+		CapitalizedName: convertToCamelCase(variables.CapitalizedName),
 	}
 	err = tmpl.Execute(entityFile, data)
 	if err != nil {
@@ -278,7 +278,7 @@ func generateInit(variables Variables) error {
 		log.Fatalf("Error: %v", err)
 	}
 	log.Println("Creating init class ...")
-	initFile, err := os.Create(fmt.Sprintf("%s/%s.go", dirPath, variables.Name))
+	initFile, err := os.Create(fmt.Sprintf("%s/init.go", dirPath))
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
@@ -324,6 +324,20 @@ func isCreatedBefore(input string) bool {
 		return true
 	}
 	return false
+}
+func convertToCamelCase(input string) string {
+	var parts []string
+	var camelCaseStr string
+	if strings.Contains(input, "_") {
+		parts = strings.Split(input, "_")
+		camelCaseStr = parts[0]
+		for i := 1; i < len(parts); i++ {
+			camelCaseStr += strings.ToUpper(string(parts[i][0])) + strings.ToLower(parts[i][1:])
+		}
+		return camelCaseStr
+	}
+	return input
+
 }
 func DeleteFiles(input string) {
 
