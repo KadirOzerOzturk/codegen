@@ -16,6 +16,7 @@ var moduleName string
 var capitalizedName string
 
 type Variables struct {
+	FixedName       string
 	Name            string
 	CapitalizedName string
 	ModuleName      string
@@ -23,7 +24,7 @@ type Variables struct {
 
 type Config struct {
 	EntityTemplate     string `json:"entityTemplate"`
-	InitTemplate       string `json:"initTemplate"`
+	InjectionTemplate  string `json:"injectionTemplate"`
 	ServiceTemplate    string `json:"serviceTemplate"`
 	ControllerTemplate string `json:"controllerTemplate"`
 	RepositoryTemplate string `json:"repositoryTemplate"`
@@ -31,7 +32,7 @@ type Config struct {
 	EntitiesDir        string `json:"entitiesDir"`
 	RepositoryDir      string `json:"repositoryDir"`
 	ServiceDir         string `json:"serviceDir"`
-	InitDir            string `json:"initDir"`
+	InjectionDir       string `json:"injectionDir"`
 	ControllerDir      string `json:"controllerDir"`
 }
 
@@ -83,6 +84,7 @@ func GenerateFiles(input string) error {
 	dirName = input
 	capitalizedName = strings.ToUpper(dirName[:1]) + strings.ToLower(dirName[1:])
 	variables := Variables{
+		FixedName:       fixName(dirName),
 		Name:            dirName,
 		CapitalizedName: capitalizedName,
 		ModuleName:      moduleName,
@@ -96,13 +98,14 @@ func GenerateFiles(input string) error {
 	if err = generateEntity(variables); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
-	if err = generateInit(variables); err != nil {
-		log.Fatalf("Error: %v", err)
-	}
+
 	if err = generateRepository(variables); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 	if err = generateService(variables); err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	if err = generateInjection(variables); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 	return nil
@@ -120,7 +123,7 @@ func generateEntity(variables Variables) error {
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
-	log.Println("Creating etitiy class ...")
+	log.Println("Creating etity class ...")
 	entityFile, err := os.Create(fmt.Sprintf("%s/%s.go", dirPath, convertToCamelCase(variables.CapitalizedName)))
 	if err != nil {
 		log.Fatalf("Error: %v", err)
@@ -182,7 +185,7 @@ func generateRepository(variables Variables) error {
 
 	data := Variables{
 		Name:            variables.Name,
-		CapitalizedName: variables.CapitalizedName,
+		CapitalizedName: convertToCamelCase(variables.CapitalizedName),
 		ModuleName:      variables.ModuleName,
 	}
 	err = tmpl.Execute(repositoryFile, data)
@@ -202,7 +205,7 @@ func generateRepository(variables Variables) error {
 // service creation
 func generateService(variables Variables) error {
 	dirPath := fmt.Sprintf(config.ServiceDir+"/%s", dirName)
-
+	fmt.Println(dirPath)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
@@ -213,7 +216,7 @@ func generateService(variables Variables) error {
 	}
 	data := Variables{
 		Name:            variables.Name,
-		CapitalizedName: variables.CapitalizedName,
+		CapitalizedName: convertToCamelCase(variables.CapitalizedName),
 		ModuleName:      variables.ModuleName,
 	}
 	log.Println("Creating service class ...")
@@ -252,8 +255,9 @@ func generateController(variables Variables) error {
 	}
 	defer controllerFile.Close()
 	data := Variables{
-		Name:            fixedName,
-		CapitalizedName: variables.CapitalizedName,
+		FixedName:       variables.FixedName,
+		Name:            variables.Name,
+		CapitalizedName: convertToCamelCase(variables.CapitalizedName),
 		ModuleName:      variables.ModuleName,
 	}
 	err = tmpl.Execute(controllerFile, data)
@@ -265,33 +269,38 @@ func generateController(variables Variables) error {
 	return nil
 }
 
-// init creation
-func generateInit(variables Variables) error {
-	dirPath := fmt.Sprintf(config.InitDir+"/%s", dirName)
-	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-	initTemplate := config.InitTemplate
+// injection creation
+func generateInjection(variables Variables) error {
+	dirPath := fmt.Sprintf(config.InjectionDir+"/%s", dirName)
 
-	tmpl, err := template.ParseFiles(initTemplate)
-	if err != nil {
-		log.Fatalf("Error: %v", err)
+	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+		log.Fatalf("Error creating directory '%s': %v", dirPath, err)
+		return err
 	}
-	log.Println("Creating init class ...")
-	initFile, err := os.Create(fmt.Sprintf("%s/init.go", dirPath))
+
+	injectionTemplate := config.InjectionTemplate
+	tmpl, err := template.ParseFiles(injectionTemplate)
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatalf("Error parsing template file '%s': %v", injectionTemplate, err)
+		return err
 	}
-	defer initFile.Close()
+	log.Println("Creating injection class ...")
+	injectionFile, err := os.Create(fmt.Sprintf("%s/injection.go", dirPath))
+	if err != nil {
+		log.Fatalf("Error creating injection file '%s/injection.go': %v", dirPath, err)
+		return err
+	}
+	defer injectionFile.Close()
 
 	data := Variables{
 		Name:            variables.Name,
 		CapitalizedName: variables.CapitalizedName,
 		ModuleName:      variables.ModuleName,
 	}
-	err = tmpl.Execute(initFile, data)
+	err = tmpl.Execute(injectionFile, data)
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatalf("Error executing template: %v", err)
+		return err
 	}
 	log.Println("done")
 
@@ -309,13 +318,14 @@ func fixName(name string) string {
 		fixed = name[:len(name)-1] + "ies"
 	default:
 		fixed = name + "s"
+
 	}
 	return fixed
 }
 
 func isCreatedBefore(input string) bool {
 	basePath := "./app/services/"
-	filePath := filepath.Join(basePath, fmt.Sprintf("%s/%s.go", input, input))
+	filePath := filepath.Join(basePath, input)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return false
 	} else if err != nil {
@@ -343,7 +353,7 @@ func DeleteFiles(input string) {
 
 	basePath := "./app/services/"
 
-	filePath := filepath.Join(basePath, fmt.Sprintf("%s/%s.go", input, input))
+	filePath := filepath.Join(basePath, input)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		fmt.Println("Dosya yok:", filePath)
 	} else if err != nil {
@@ -384,9 +394,9 @@ func deleteControllers(input string) error {
 
 func deleteEntities(input string) error {
 	deleteFile := strings.ToUpper(input[:1]) + strings.ToLower(input[1:])
-	fmt.Println(deleteFile)
+
 	basePath := "./app/entities"
-	filePath := filepath.Join(basePath, fmt.Sprintf("%s.go", deleteFile))
+	filePath := filepath.Join(basePath, fmt.Sprintf("%s.go", convertToCamelCase(deleteFile)))
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		log.Fatalf("Error: %v", err)
@@ -410,7 +420,6 @@ func deleteEntities(input string) error {
 
 func deleteServices(input string) error {
 	deleteFile := input
-	fmt.Println(deleteFile)
 	basePath := "./app/services"
 	filePath := filepath.Join(basePath, fmt.Sprintf("%s", deleteFile))
 

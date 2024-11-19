@@ -1,6 +1,6 @@
 {
     "entityTemplate": "/etc/codegen/templates/entityTemplate",
-    "initTemplate": "/etc/codegen/templates/initTemplate",
+    "injectionTemplate": "/etc/codegen/templates/injectionTemplate",
     "serviceTemplate": "/etc/codegen/templates/serviceTemplate",
     "controllerTemplate": "/etc/codegen/templates/controllerTemplate",
     "repositoryTemplate": "/etc/codegen/templates/repositoryTemplate",
@@ -8,7 +8,7 @@
     "entitiesDir": "./app/entities",
     "repositoryDir": "./app/services",
     "serviceDir": "./app/services",
-    "initDir": "./app/services",
+    "injectionDir": "./app/services",
     "controllerDir": "./app/controllers"
    
 }
